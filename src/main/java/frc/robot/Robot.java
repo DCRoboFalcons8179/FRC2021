@@ -240,9 +240,11 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Falcon Encoder 5 pos", lifta.getSelectedSensorPosition());
     SmartDashboard.putNumber("Falcon Encoder 10 pos", liftb.getSelectedSensorPosition());
 
+    SmartDashboard.putNumber("Tilt Raw Output",tilt.getSelectedSensorPosition());
+
     currentDistance = m_ultrasonic.getValue() * kValueToInches;
 
-
+// Pull this
   }
 
   /**
@@ -266,9 +268,11 @@ public class Robot extends TimedRobot {
   /**
    * This function is called periodically during autonomous.
    */
+
   @Override
   public void autonomousPeriodic() {
     
+    // Basic Timer
    double time = Timer.getFPGATimestamp();
   
     if (time-startTime < 3) {
