@@ -309,6 +309,7 @@ public class Robot extends TimedRobot {
   @Override
   public void teleopInit() {
     
+    //Zero the Lifters
     lifta.setSelectedSensorPosition(0);
     liftb.setSelectedSensorPosition(0);
     
