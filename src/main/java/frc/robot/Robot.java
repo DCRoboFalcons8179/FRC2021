@@ -7,60 +7,50 @@
 
 package frc.robot;
 
-// Test Comment
-
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.GenericHID.Hand;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.cscore.UsbCamera;
-// Another added comment
-import edu.wpi.first.wpilibj.smartdashboard.*;
-import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.PowerDistributionPanel;
-import edu.wpi.first.wpilibj.AnalogInput;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
-import com.ctre.phoenix.motorcontrol.can.*;
-import edu.wpi.first.wpilibj.PWMVictorSPX;
 import edu.wpi.cscore.VideoSink;
-import edu.wpi.cscore.VideoMode.PixelFormat;
-import edu.wpi.first.networktables.*;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.AnalogInput;
+import edu.wpi.first.wpilibj.Joystick;
+// import edu.wpi.first.wpilibj.GenericHID.Hand;
+// import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+// import edu.wpi.first.wpilibj.smartdashboard.*;
+// import edu.wpi.first.wpilibj.PowerDistributionPanel;
+// import edu.wpi.first.wpilibj.SpeedControllerGroup;
+// import com.ctre.phoenix.motorcontrol.can.*;
+// import edu.wpi.first.wpilibj.PWMVictorSPX;
+// import edu.wpi.cscore.VideoMode.PixelFormat;
+// import edu.wpi.first.networktables.*;
 
-
+import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
-import com.ctre.phoenix.motorcontrol.IMotorController;
-import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
-import com.ctre.phoenix.motorcontrol.can.VictorSPXPIDSetConfiguration;
-import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
-import com.ctre.phoenix.motorcontrol.Faults;
-import com.ctre.phoenix.motorcontrol.InvertType;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
-import com.ctre.phoenix.motorcontrol.RemoteSensorSource;
-import com.ctre.phoenix.motorcontrol.SensorTerm;
-import com.ctre.phoenix.motorcontrol.ControlMode;
-import com.ctre.phoenix.motorcontrol.FollowerType;
-import com.ctre.phoenix.motorcontrol.DemandType;
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.StatusFrame;
-import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
-import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
-import com.ctre.phoenix.motorcontrol.can.*;
-import edu.wpi.first.wpilibj.DutyCycleEncoder;
-/**
- * The VM is configured to automatically run this class, and to call the
- * functions corresponding to each mode, as described in the TimedRobot
- * documentation. If you change the name of this class or the package after
- * creating this project, you must also update the build.gradle file in the
- * project.
- */
+import com.ctre.phoenix.motorcontrol.can.WPI_VictorSPX;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
+// import com.ctre.phoenix.motorcontrol.Faults;
+// import com.ctre.phoenix.motorcontrol.InvertType;
+// import com.ctre.phoenix.motorcontrol.RemoteSensorSource;
+// import com.ctre.phoenix.motorcontrol.SensorTerm;
+// import com.ctre.phoenix.motorcontrol.FollowerType;
+// import com.ctre.phoenix.motorcontrol.DemandType;
+// import com.ctre.phoenix.motorcontrol.StatusFrame;
+// import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
+// import com.ctre.phoenix.motorcontrol.can.*;
+// import edu.wpi.first.wpilibj.DutyCycleEncoder;
+// import com.ctre.phoenix.motorcontrol.IMotorController;
+// import com.ctre.phoenix.motorcontrol.can.BaseMotorController;
+// import com.ctre.phoenix.motorcontrol.can.VictorSPXPIDSetConfiguration;
+
 public class Robot extends TimedRobot {
 
   // BEGIN Declare and Attach CAN IDs to devices
@@ -101,9 +91,6 @@ public class Robot extends TimedRobot {
   private final Joystick xbox = new Joystick(1);
   private final Joystick Logi = new Joystick(2);
 
-  // Talon FX Counting
-  private final int unitsperRev = 2048 * 35;
-  private final int numbRev = 5;
 
   // Other global variables
 
@@ -119,7 +106,7 @@ public class Robot extends TimedRobot {
   int max_slow = 270000;
   int min_slow =  60000;
   int min_stop =  30000;
-  int min_min  =   5000;
+  int min_min  =   3000;
   double lift_speed = 0;
 
   double startTime;
@@ -215,12 +202,10 @@ public class Robot extends TimedRobot {
     // camera1.setBrightness(1);
     // camera1.setExposureAuto();
   
-    // Tilt
+    // Tilt 
     tilt.setNeutralMode(NeutralMode.Brake);
     tilt.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
     tilt.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
-
-    // Ultrasonic
 
 
   }
@@ -342,9 +327,8 @@ public class Robot extends TimedRobot {
     }
 
 
-    double start_time = Timer.getFPGATimestamp();
-    double start = 0;
 
+    // Twist but with buttons
     if(xbox.getRawButton(6) || logA.getRawButton(6)) { 
       vroom.arcadeDrive(0.4, -0.65);
       driveC.follow(driveA);
