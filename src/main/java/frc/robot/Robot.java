@@ -236,7 +236,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("X",logA.getX());
     //SmartDashboard.putNumber("PDP Voltage", PDP.getVoltage());
     SmartDashboard.putNumber("Distance",cc);
-    //SmartDashboard.putNumber("Position", lifta.getSelectedSensorPosition());
+    SmartDashboard.putNumber("US Distance", currentDistance);
     SmartDashboard.putNumber("throttle channel", logA.getThrottle());
     SmartDashboard.putNumber("pulses", tilt_backup);
     SmartDashboard.putNumber("Falcon Encoder 5 pos", lifta.getSelectedSensorPosition());
