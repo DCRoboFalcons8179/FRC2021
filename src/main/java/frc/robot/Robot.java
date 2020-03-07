@@ -104,8 +104,8 @@ public class Robot extends TimedRobot {
   int max_max  = 360000;
   int max_stop = 355000;
   int max_slow = 270000;
-  int min_slow =  60000;
-  int min_stop =  30000;
+  int min_slow =  70000;
+  int min_stop =  50000;
   int min_min  =   3000;
   double lift_speed = 0;
 
@@ -473,22 +473,16 @@ public class Robot extends TimedRobot {
     int xpov = xbox.getPOV();
     int lpov = logA.getPOV();
     
-    if (xpov == 315 || xpov == 0 || xpov == 45 || xpov ==360) {
+    if ((xpov == 315 || xpov == 0 || xpov == 45 || xpov ==360)||(lpov == 315 || lpov == 0 || lpov == 45 || lpov ==360)) {
         tilt.set(ControlMode.PercentOutput,0.1);
     } 
-    else if (xpov == 180 || xpov == 135 || xpov == 225) {
+    else if ((xpov == 180 || xpov == 135 || xpov == 225)||(lpov == 180 || lpov == 135 || lpov == 225)) {
         tilt.set(ControlMode.PercentOutput,-0.1);
     }
     else {
       tilt.set(ControlMode.PercentOutput,0);
     }
 
-
-
-    // if (xbox.getRawButtonPressed(5))
-    //   tilt_backup = -1 * tilt_backup;
-
-    //tilt.set(ControlMode.PercentOutput,tilt_backup);
 
   }
 
@@ -505,5 +499,7 @@ public class Robot extends TimedRobot {
 
     lifta.setNeutralMode(NeutralMode.Coast);
     lifta.setNeutralMode(NeutralMode.Coast);
+
+    
   }
 }
