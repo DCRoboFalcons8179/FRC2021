@@ -126,7 +126,7 @@ public class Robot extends TimedRobot {
   private static final double kValueToInches = 0.125/2.54;
   private final AnalogInput m_ultrasonic = new AnalogInput(0);
 
-  double safety = 0.6;
+  double safety = 1; //0.g
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -233,8 +233,8 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     
     // Smart Dashboard Stuff Here
-    SmartDashboard.putNumber("Y",logA.getY());
-    SmartDashboard.putNumber("X",logA.getX());
+    SmartDashboard.putNumber("LeftShoot",leftShoot);
+    SmartDashboard.putNumber("RightShoot",rightShoot);
     //SmartDashboard.putNumber("PDP Voltage", PDP.getVoltage());
     SmartDashboard.putNumber("Distance",cc);
     SmartDashboard.putNumber("US Distance", currentDistance);
@@ -244,6 +244,7 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Falcon Encoder 10 pos", liftb.getSelectedSensorPosition());
 
     SmartDashboard.putNumber("Tilt Raw Output",tilt.getSelectedSensorPosition());
+    SmartDashboard.putNumber("Tilt Degrees", (tilt.getSelectedSensorPosition() * 0.001779) + 4);
 
     currentDistance = m_ultrasonic.getValue() * kValueToInches;
 
@@ -265,6 +266,8 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
 
     startTime = Timer.getFPGATimestamp();
+    tiltHome();
+    setTilt(17.0);
 
   }
 
@@ -279,27 +282,38 @@ public class Robot extends TimedRobot {
    double time = Timer.getFPGATimestamp();
   
     if (time-startTime < 3) {
-      shoota.set(ControlMode.PercentOutput, .20);
-      shootb.set(ControlMode.PercentOutput, -1 * .20);
+      shoota.set(ControlMode.PercentOutput, .60);
+      shootb.set(ControlMode.PercentOutput, -1 * .60);
     }
-    else if (3 < time-startTime && time-startTime < 9) {
-      shoota.set(ControlMode.PercentOutput, .20);
-      shootb.set(ControlMode.PercentOutput, -1 * .20);
+    else if (3 < time-startTime && time-startTime < 7) {
+      shoota.set(ControlMode.PercentOutput, .60);
+      shootb.set(ControlMode.PercentOutput, -1 * .60);
       bbar.set(ControlMode.PercentOutput,-0.6);
       conv.set(ControlMode.PercentOutput,.75);
     
     }
+    else if (7 < time-startTime && time-startTime < 8) {
+      bbar.set(ControlMode.PercentOutput,0.2);
+      conv.set(ControlMode.PercentOutput,-.5);
+    }
 
-  //  else if (9 < time-startTime && time-startTime < 11){
-  //    driveA.set(0.4);
-  //    driveB.set(-0.4);
-  //    driveC.follow(driveA);
-  //    driveD.follow(driveB);
-  //    shoota.set(ControlMode.PercentOutput, 0);
-  //    shootb.set(ControlMode.PercentOutput, -1 * 0);
-  //    bbar.set(ControlMode.PercentOutput,-0);
-  //    conv.set(ControlMode.PercentOutput,0);
-  // }
+    else if (8 < time-startTime && time-startTime < 12) {
+      shoota.set(ControlMode.PercentOutput, .60);
+      shootb.set(ControlMode.PercentOutput, -1 * .60);
+      bbar.set(ControlMode.PercentOutput,-0.6);
+      conv.set(ControlMode.PercentOutput,.75);
+    
+    }
+   else if (12 < time-startTime && time-startTime < 14){
+     driveA.set(0.4);
+     driveB.set(-0.4);
+     driveC.follow(driveA);
+     driveD.follow(driveB);
+     shoota.set(ControlMode.PercentOutput, 0);
+     shootb.set(ControlMode.PercentOutput, -1 * 0);
+     bbar.set(ControlMode.PercentOutput,-0);
+     conv.set(ControlMode.PercentOutput,0);
+  }
    else {
     driveA.set(0);
     driveB.set(0);
@@ -320,6 +334,10 @@ public class Robot extends TimedRobot {
     lifta.setSelectedSensorPosition(0);
     liftb.setSelectedSensorPosition(0);
     
+    // COMMENT THIS OUT IF NEED TO BE SAFE
+    // Home the Tilt 
+    tiltHome();
+    
   }
 
   
@@ -328,7 +346,7 @@ public class Robot extends TimedRobot {
 
     // Drive
     
-    double zoom = logA.getY() * .95 * safety;
+    double zoom = logA.getY() * .80 * safety;
 
     if (logA.getTwist() > 0.5) {
       zoom = -1 * logA.getTwist();
@@ -361,7 +379,7 @@ public class Robot extends TimedRobot {
  
 
     final double bo = -0.60;
-    final double co = 0.45; //55
+    final double co = 0.65; //55
     
     
     if (logA.getRawButtonPressed(1) || xbox.getRawButtonPressed(1)) {
@@ -396,10 +414,10 @@ public class Robot extends TimedRobot {
       }
     }
 
-    if (xbox.getY() > 0.2 || xbox.getY() < -0.2) {
+    if (xbox.getY() > 0.4 || xbox.getY() < -0.4) {
         bb =  xbox.getY();
     }
-    if (xbox.getZ() > 0.2 || xbox.getZ() < -0.2) {
+    if (xbox.getZ() > 0.4 || xbox.getZ() < -0.4) {
         cc = -1 * xbox.getZ();
     }
     bbar.set(ControlMode.PercentOutput,bb);
@@ -472,9 +490,20 @@ public class Robot extends TimedRobot {
 
     calcShoot(shootout, xbox.getThrottle(),xbox.getTwist());
 
+    if (logA.getRawButton(8)) {
+      leftShoot = 0.7;
+      rightShoot = 0.7;
+
+    }
+
     shoota.set(leftShoot);
     shootb.set(rightShoot);
 
+
+    if (logA.getRawButtonPressed(8)) {
+      setTilt(14);
+
+    }
     // shoota.set(ControlMode.PercentOutput, xbox.getTwist());
     // shootb.set(ControlMode.PercentOutput, -1*xbox.getThrottle());
 
@@ -488,6 +517,10 @@ public class Robot extends TimedRobot {
     tilt_backup = xbox.getZ();
     int xpov = xbox.getPOV();
     int lpov = logA.getPOV();
+    
+    if (logA.getRawButton(8)) {
+        setTilt(11.0);
+    }
     
     if ((xpov == 315 || xpov == 0 || xpov == 45 || xpov ==360)||(lpov == 315 || lpov == 0 || lpov == 45 || lpov ==360)) {
         tilt.set(ControlMode.PercentOutput,0.1);
@@ -505,6 +538,13 @@ public class Robot extends TimedRobot {
   /**
    * This function is called periodically during test mode.
    */
+  
+  @Override
+  public void testInit() {
+    tiltHome();
+    setTilt(16.0);
+  }
+  
   @Override
   public void testPeriodic() {
 
@@ -520,6 +560,46 @@ public class Robot extends TimedRobot {
     
   }
 
+
+  // Auto Tilt Control
+
+  public void tiltHome() {
+      
+    tilt.set(ControlMode.PercentOutput, -0.1);
+    double starttime = Timer.getFPGATimestamp();
+
+    while(true) {
+      double time = Timer.getFPGATimestamp();
+      if (time - starttime > 1) {
+        tilt.set(ControlMode.PercentOutput,0);
+        tilt.setSelectedSensorPosition(0);
+        return;
+      }
+    }
+  }
+
+  public void setTilt (double target_d) {
+
+    double target = (target_d - 3)/ 0.001779711;
+    double current = tilt.getSelectedSensorPosition();
+
+    while(true) {
+      if(current < target - 500){
+        tilt.set(ControlMode.PercentOutput,0.1);
+      }
+      else if(target + 500 < current) {
+        tilt.set(ControlMode.PercentOutput, -0.1);
+      }
+      else {
+        break;
+      }
+
+      current = tilt.getSelectedSensorPosition();
+    }
+  }
+
+
+  // Used for shooting Spin
   double bA;
   double bB;
   double bC;
@@ -536,21 +616,23 @@ public class Robot extends TimedRobot {
 
     mapBands(shootout,minShoot);
 
+
+
     // Bands: 0-30,30-60 ,60-90, 90-100
       if (.30 <= left && left < 0.6)
-        leftShoot = bC;
+        leftShoot = bA;
       else if (.60 <= left && left < 0.9)
         leftShoot = bB;
       else if (.90 <= left && left <= 1) {
-        leftShoot= bA;
+        leftShoot= bC;
       }
 
       if (.30 <= right && right < 0.6)
-        rightShoot = bC;
+        rightShoot = bA;
       else if (.60 <= right && right < 0.9)
         rightShoot = bB;
       else if (.90 <= right && right <= 1) {
-        rightShoot= bA;
+        rightShoot= bC;
       }
       
 
