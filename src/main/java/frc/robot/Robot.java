@@ -114,6 +114,9 @@ public class Robot extends TimedRobot {
 
   double currentDistance;
 
+  double leftShoot;
+  double rightShoot;
+
   UsbCamera camera0;
   UsbCamera camera1;
   VideoSink server0;
@@ -358,7 +361,7 @@ public class Robot extends TimedRobot {
  
 
     final double bo = -0.60;
-    final double co = 0.40; //55
+    final double co = 0.45; //55
     
     
     if (logA.getRawButtonPressed(1) || xbox.getRawButtonPressed(1)) {
@@ -394,7 +397,7 @@ public class Robot extends TimedRobot {
     }
 
     if (xbox.getY() > 0.2 || xbox.getY() < -0.2) {
-        bb = -1 * xbox.getY();
+        bb =  xbox.getY();
     }
     if (xbox.getZ() > 0.2 || xbox.getZ() < -0.2) {
         cc = -1 * xbox.getZ();
@@ -464,8 +467,13 @@ public class Robot extends TimedRobot {
 
     double shootout = (Logi.getThrottle() + 1) / 2;
 
-    shoota.set(ControlMode.PercentOutput, shootout);
-    shootb.follow(shoota);
+    leftShoot = shootout;
+    rightShoot = shootout;
+
+    calcShoot(shootout, xbox.getThrottle(),xbox.getTwist());
+
+    shoota.set(leftShoot);
+    shootb.set(rightShoot);
 
     // shoota.set(ControlMode.PercentOutput, xbox.getTwist());
     // shootb.set(ControlMode.PercentOutput, -1*xbox.getThrottle());
@@ -500,6 +508,7 @@ public class Robot extends TimedRobot {
   @Override
   public void testPeriodic() {
 
+
     lift_backup = -1 * xbox.getY();
 
     lifta.set(ControlMode.PercentOutput,lift_backup);
@@ -509,5 +518,55 @@ public class Robot extends TimedRobot {
     lifta.setNeutralMode(NeutralMode.Coast);
 
     
+  }
+
+  double bA;
+  double bB;
+  double bC;
+  double pDrop = 0.3;
+
+  private void calcShoot(double shootout, double left, double right) {
+
+    double minShoot = 0.20;
+    double deadBand = 0.30;
+
+    if(shootout < minShoot || (left <  deadBand && right < deadBand)) {
+      return;
+    }
+
+    mapBands(shootout,minShoot);
+
+    // Bands: 0-30,30-60 ,60-90, 90-100
+      if (.30 <= left && left < 0.6)
+        leftShoot = bC;
+      else if (.60 <= left && left < 0.9)
+        leftShoot = bB;
+      else if (.90 <= left && left <= 1) {
+        leftShoot= bA;
+      }
+
+      if (.30 <= right && right < 0.6)
+        rightShoot = bC;
+      else if (.60 <= right && right < 0.9)
+        rightShoot = bB;
+      else if (.90 <= right && right <= 1) {
+        rightShoot= bA;
+      }
+      
+
+  }
+
+  private void mapBands(double max, double min) {
+      bA = max;
+      bB = max - 0.15;
+      bC = max - 0.30;
+
+      if (max - pDrop < min) {
+        bB = max - (max - min) / 2;
+        bC = min;
+      }
+
+      return;
+
   }
 }
