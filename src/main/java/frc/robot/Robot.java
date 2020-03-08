@@ -14,6 +14,7 @@ import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoSink;
+import edu.wpi.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Joystick;
@@ -122,7 +123,7 @@ public class Robot extends TimedRobot {
   private static final double kValueToInches = 0.125/2.54;
   private final AnalogInput m_ultrasonic = new AnalogInput(0);
 
-
+  double safety = 0.6;
   /**
    * This function is run when the robot is first started up and should be
    * used for any initialization code.
@@ -194,13 +195,20 @@ public class Robot extends TimedRobot {
 
     //Cameras
     camera0 = CameraServer.getInstance().startAutomaticCapture();
-    camera0.setResolution(640, 360);
+    camera0.setResolution(160, 90);
+    camera0.setFPS(3);
+    camera0.setPixelFormat(PixelFormat.kMJPEG);
 
     camera1 = CameraServer.getInstance().startAutomaticCapture();
-    camera1.setResolution(640, 360);
-    
+    camera1.setResolution(320, 180);
+    camera1.setFPS(10);
+    camera0.setPixelFormat(PixelFormat.kMJPEG);
+
     // camera1.setBrightness(1);
     // camera1.setExposureAuto();
+
+    camera1.setExposureAuto();
+    camera1.setBrightness(50);
   
     // Tilt 
     tilt.setNeutralMode(NeutralMode.Brake);
@@ -317,7 +325,7 @@ public class Robot extends TimedRobot {
 
     // Drive
     
-    double zoom = logA.getY() * .95;
+    double zoom = logA.getY() * .95 * safety;
 
     if (logA.getTwist() > 0.5) {
       zoom = -1 * logA.getTwist();
@@ -340,7 +348,7 @@ public class Robot extends TimedRobot {
       driveD.follow(driveB);
     } 
     else {
-      vroom.arcadeDrive(zoom, -1* logA.getZ());
+      vroom.arcadeDrive(zoom, -1* logA.getZ() * safety);
       driveC.follow(driveA);
       driveD.follow(driveB);
     }
@@ -350,7 +358,7 @@ public class Robot extends TimedRobot {
  
 
     final double bo = -0.60;
-    final double co = 0.55;
+    final double co = 0.40; //55
     
     
     if (logA.getRawButtonPressed(1) || xbox.getRawButtonPressed(1)) {
