@@ -16,6 +16,7 @@ import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoSink;
 import edu.wpi.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Joystick;
 // import edu.wpi.first.wpilibj.GenericHID.Hand;
@@ -29,6 +30,7 @@ import edu.wpi.first.wpilibj.Joystick;
 // import edu.wpi.first.networktables.*;
 
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+//import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -110,6 +112,12 @@ public class Robot extends TimedRobot {
   int min_min  =   3000;
   double lift_speed = 0;
 
+  // Tilt Stuff
+  int kTimeoutMs = 30; 
+  int kSlotIdx = 0;
+  int kPIDLoopIdx = 0;
+  int maxTilt = 1100;
+
   double startTime;
 
   double currentDistance;
@@ -179,6 +187,29 @@ public class Robot extends TimedRobot {
     shootb.setSensorPhase(false);
     shootb.setInverted(true);
 
+    // Set up Tilt PID Stuff
+    tilt.configFactoryDefault();
+    // tilt.configSelectedFeedbackSensor(TalonFXFeedbackDevice.IntegratedSensor.toFeedbackDevice(),kPIDLoopIdx,kTimeoutMs);
+    // tilt.configNeutralDeadband(0.001);
+    // tilt.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, 10,kTimeoutMs);
+    // tilt.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, 10, kTimeoutMs);
+    
+    // tilt.configNominalOutputForward(0);
+    // tilt.configNominalOutputReverse(0);
+    // tilt.configPeakOutputForward(1,kTimeoutMs);
+    // tilt.configPeakOutputReverse(-1,kTimeoutMs);
+
+    // tilt.config_kF(kSlotIdx, 18.6,kTimeoutMs);
+    // tilt.config_kP(kSlotIdx, 1,kTimeoutMs);
+    // tilt.config_kI(kSlotIdx, 0.0,kTimeoutMs);
+    // tilt.config_kD(kSlotIdx, 0.0,kTimeoutMs);
+
+    // tilt.configMotionCruiseVelocity(1100, kTimeoutMs);
+    // tilt.configMotionAcceleration(0, kTimeoutMs);
+    //tilt.configMotionSCurveStrength(3);
+
+    
+
     // Set Controller Channels
     logA.setZChannel(4);
     logA.setThrottleChannel(3);
@@ -218,7 +249,6 @@ public class Robot extends TimedRobot {
     tilt.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
     tilt.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
 
-
   }
 
   /**
@@ -229,15 +259,23 @@ public class Robot extends TimedRobot {
    * <p>This runs after the mode specific periodic functions, but before
    * LiveWindow and SmartDashboard integrated updating.
    */
+
+  boolean bb_on;
+  boolean cc_on;
+
   @Override
   public void robotPeriodic() {
+
+    if (bb < 0) {
+      bb_on = false;
+    }
     
     // Smart Dashboard Stuff Here
     SmartDashboard.putNumber("LeftShoot",leftShoot);
     SmartDashboard.putNumber("RightShoot",rightShoot);
     //SmartDashboard.putNumber("PDP Voltage", PDP.getVoltage());
     SmartDashboard.putNumber("Distance",cc);
-    SmartDashboard.putNumber("US Distance", currentDistance);
+    SmartDashboard.putNumber("US Distance", currentDistance/12);
     SmartDashboard.putNumber("throttle channel", logA.getThrottle());
     SmartDashboard.putNumber("pulses", tilt_backup);
     SmartDashboard.putNumber("Falcon Encoder 5 pos", lifta.getSelectedSensorPosition());
@@ -247,6 +285,8 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Tilt Degrees", (tilt.getSelectedSensorPosition() * 0.001779) + 4);
 
     currentDistance = m_ultrasonic.getValue() * kValueToInches;
+
+    
 
 // Pull this
   }
@@ -435,37 +475,37 @@ public class Robot extends TimedRobot {
     senseX = lifta.getSelectedSensorPosition(0);
     if (Logi.getRawButton(12)) {
       lift_speed = Logi.getTwist();
-  }
-  else {
-    if (Logi.getRawButtonPressed(7)) {
-      lift_speed = 0.11;
-    }
-    
-    else if (Logi.getRawButtonPressed(8)) {
-      lift_speed = -0.11;
-    }
+      }
+      else {
+        if (Logi.getRawButtonPressed(7)) {
+          lift_speed = 0.11;
+        }
+        
+        else if (Logi.getRawButtonPressed(8)) {
+          lift_speed = -0.11;
+        }
 
-    if (lift_speed > 0.1) {
-      if (senseX > (max_stop))
-        lift_speed = 0;
-      else if (senseX > (max_slow))
-        lift_speed = .35;
-      else
-        lift_speed = .85;
-    }
-    else if (lift_speed < -0.1) {
-      if (senseX < (min_stop))
-        lift_speed = 0;
-      else if (senseX < (min_slow))
-        lift_speed = -.5;
-      else
-        lift_speed = -.95;
-    }
-  }
+        if (lift_speed > 0.1) {
+          if (senseX > (max_stop))
+            lift_speed = 0;
+          else if (senseX > (max_slow))
+            lift_speed = .35;
+          else
+            lift_speed = .85;
+        }
+        else if (lift_speed < -0.1) {
+          if (senseX < (min_stop))
+            lift_speed = 0;
+          else if (senseX < (min_slow))
+            lift_speed = -.5;
+          else
+            lift_speed = -.95;
+        }
+      }
 
-  if(Logi.getRawButton(11)) {
-    lift_speed = 0;
-  }
+      if(Logi.getRawButton(11)) {
+        lift_speed = 0;
+      }
 
 
 
@@ -485,28 +525,40 @@ public class Robot extends TimedRobot {
 
     // Shooter
 
-    double shootout = (Logi.getThrottle() + 1) / 2;
+    double shootout = (-1*Logi.getThrottle() + 1) / 2;
 
     leftShoot = shootout;
     rightShoot = shootout;
 
+    remapThrottle(shootout);
+
+    // Calculating Spin
     calcShoot(shootout, xbox.getThrottle(),xbox.getTwist());
 
+    // Long Shot
     if (logA.getRawButton(8)) {
       leftShoot = 0.56;
       rightShoot = 0.56;
 
     }
 
+    // Shorter Shot
     if (logA.getRawButton(7)) {
       leftShoot = 0.475;
       rightShoot = 0.475;
 
     }
+    // Auton Shot
+    if (logA.getRawButton(3)) {
+      leftShoot = 0.60;
+      rightShoot = 0.60;
+
+    }
+
     shoota.set(leftShoot);
     shootb.set(rightShoot);
 
-
+    // Set Tilts for canned shots
     if (logA.getRawButtonPressed(8)) {
       tiltHome();
       setTilt(22);
@@ -515,8 +567,12 @@ public class Robot extends TimedRobot {
     if (logA.getRawButtonPressed(7)) {
       tiltHome();
       setTilt(22);
-
     }
+    if(logA.getRawButtonPressed(3)) {
+      tiltHome();
+      setTilt(16);
+    }
+
     // shoota.set(ControlMode.PercentOutput, xbox.getTwist());
     // shootb.set(ControlMode.PercentOutput, -1*xbox.getThrottle());
 
@@ -545,7 +601,6 @@ public class Robot extends TimedRobot {
       tilt.set(ControlMode.PercentOutput,0);
     }
 
-
   }
 
   /**
@@ -554,22 +609,13 @@ public class Robot extends TimedRobot {
   
   @Override
   public void testInit() {
+    setTilt(0);
+    setTiltMagic(12);   
 
   }
   
   @Override
   public void testPeriodic() {
-
-
-    lift_backup = -1 * xbox.getY();
-
-    lifta.set(ControlMode.PercentOutput,lift_backup);
-    liftb.set(ControlMode.PercentOutput, -1 * lift_backup);
-
-    lifta.setNeutralMode(NeutralMode.Coast);
-    lifta.setNeutralMode(NeutralMode.Coast);
-
-    
   }
 
 
@@ -577,7 +623,7 @@ public class Robot extends TimedRobot {
 
   public void tiltHome() {
       
-    tilt.set(ControlMode.PercentOutput, -0.1);
+    tilt.set(ControlMode.PercentOutput, -0.15);
     double starttime = Timer.getFPGATimestamp();
 
     while(true) {
@@ -608,6 +654,15 @@ public class Robot extends TimedRobot {
 
       current = tilt.getSelectedSensorPosition();
     }
+  }
+
+  public void setTiltMagic (double target_d) {
+    double target = (target_d - 2)/ 0.001779711;
+    tilt.set(ControlMode.MotionMagic, target);
+    System.out.println(tilt.getSelectedSensorPosition());
+    System.out.println(tilt.getSelectedSensorPosition() * 0.001779711 + 2);
+    
+
   }
 
 
@@ -652,8 +707,8 @@ public class Robot extends TimedRobot {
 
   private void mapBands(double max, double min) {
       bA = max;
-      bB = max - 0.15;
-      bC = max - 0.30;
+      bB = max - 0.1;
+      bC = max - 0.2;
 
       if (max - pDrop < min) {
         bB = max - (max - min) / 2;
@@ -661,6 +716,20 @@ public class Robot extends TimedRobot {
       }
 
       return;
+
+  }
+
+  private double remapThrottle(double shootout) {
+
+    if (shootout < 0.1) {
+      return 0;
+    }
+    else if (shootout < 0.95) {
+      return (0.3 + ((0.7-0.3)/0.85 * (shootout - 0.1)));
+    }
+    else {
+      return (1);
+    }
 
   }
 }
