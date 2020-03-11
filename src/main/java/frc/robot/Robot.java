@@ -7,6 +7,8 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj.shuffleboard.*;
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -16,9 +18,11 @@ import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoSink;
 import edu.wpi.cscore.VideoMode.PixelFormat;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
+import edu.wpi.first.wpilibj.interfaces.Gyro;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.AnalogInput;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.SPI;
 // import edu.wpi.first.wpilibj.GenericHID.Hand;
 // import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 // import edu.wpi.first.wpilibj.smartdashboard.*;
@@ -69,7 +73,7 @@ public class Robot extends TimedRobot {
   // Belt Motors
   
   private final WPI_VictorSPX conv = new WPI_VictorSPX(3);
-  private final WPI_VictorSPX bbar = new WPI_VictorSPX(15);
+  private final WPI_TalonFX bbar = new WPI_TalonFX(11);
 
   // Lift Motors
 
@@ -133,6 +137,10 @@ public class Robot extends TimedRobot {
 
   private static final double kValueToInches = 0.125/2.54;
   private final AnalogInput m_ultrasonic = new AnalogInput(0);
+
+  // GYRO
+  Gyro gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+
 
   double safety = 1; //0.g
   /**
@@ -249,6 +257,9 @@ public class Robot extends TimedRobot {
     tilt.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
     tilt.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen);
 
+    // Gryo
+    gyro.calibrate();
+    
   }
 
   /**
@@ -266,18 +277,15 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
 
-    if (bb < 0) {
-      bb_on = false;
-    }
     
     // Smart Dashboard Stuff Here
     SmartDashboard.putNumber("LeftShoot",leftShoot);
     SmartDashboard.putNumber("RightShoot",rightShoot);
     //SmartDashboard.putNumber("PDP Voltage", PDP.getVoltage());
-    SmartDashboard.putNumber("Distance",cc);
+    SmartDashboard.putNumber("Beater Bar",bb);
+    SmartDashboard.putNumber("Conveyor",cc);
     SmartDashboard.putNumber("US Distance", currentDistance/12);
-    SmartDashboard.putNumber("throttle channel", logA.getThrottle());
-    SmartDashboard.putNumber("pulses", tilt_backup);
+    SmartDashboard.putNumber("Gyro", gyro.getAngle());
     SmartDashboard.putNumber("Falcon Encoder 5 pos", lifta.getSelectedSensorPosition());
     SmartDashboard.putNumber("Falcon Encoder 10 pos", liftb.getSelectedSensorPosition());
 
@@ -328,7 +336,7 @@ public class Robot extends TimedRobot {
     else if (3 < time-startTime && time-startTime < 3.5) {
       shoota.set(ControlMode.PercentOutput, .60);
       shootb.set(ControlMode.PercentOutput, .60);
-      bbar.set(ControlMode.PercentOutput,-0.6);
+      bbar.set(ControlMode.PercentOutput,0.5);
       conv.set(ControlMode.PercentOutput,.75);
     
     }
@@ -342,7 +350,7 @@ public class Robot extends TimedRobot {
     else if (6 < time-startTime && time-startTime < 12) {
       shoota.set(ControlMode.PercentOutput, .60);
       shootb.set(ControlMode.PercentOutput, .60);
-      bbar.set(ControlMode.PercentOutput,-0.6);
+      bbar.set(ControlMode.PercentOutput,0.5);
       conv.set(ControlMode.PercentOutput,.75);
     
     }
@@ -378,7 +386,7 @@ public class Robot extends TimedRobot {
     
     // COMMENT THIS OUT IF NEED TO BE SAFE
     // Home the Tilt 
-    tiltHome();
+    // tiltHome();
     
   }
 
@@ -420,41 +428,40 @@ public class Robot extends TimedRobot {
     // Conveyor
  
 
-    final double bo = -0.60;
-    final double co = 0.65; //55
+    final double bo = 0.50;
+    final double co = 0.65; //65
     
-    
-    if (logA.getRawButtonPressed(1) || xbox.getRawButtonPressed(1)) {
-      if (bb == 0)
-      {
-       bb = bo;
-       cc = co;
+    if (logA.getRawButtonPressed(2)) {
+      if (bb == 0) {
+        bb = bo + 0.01;
       }
       else {
         bb = 0;
-        cc = 0;
       }
     }
     else {
-      if (logA.getRawButtonPressed(2) || xbox.getRawButtonPressed(2)) {
-        if (bb == 0)
-        {
-         bb = bo;
-        }
-        else {
-          bb = 0;
-        }
-      }
-      if (logA.getRawButtonPressed(4) || xbox.getRawButtonPressed(4)) {
-        if (cc == 0)
-        {
-          cc = co;
-        }
-        else {
-          cc = 0;
-        }
-      }
+      if (bb != bo + 0.01)
+        bb = 0;
     }
+    
+    cc = 0;
+    
+    
+    if (logA.getRawButton(1) || xbox.getRawButton(1)) {
+       bb = bo;
+       cc = co;
+    }
+    if (logA.getRawButton(4) || xbox.getRawButton(4)) {
+      cc = co;
+    }
+    
+    if (xbox.getRawButton(2)) {
+      bb = bo;
+    }
+    if (xbox.getRawButton(3)) {
+      bb = -0.75 * bo;
+    }
+
 
     if (xbox.getY() > 0.4 || xbox.getY() < -0.4) {
         bb =  xbox.getY();
@@ -465,10 +472,6 @@ public class Robot extends TimedRobot {
     bbar.set(ControlMode.PercentOutput,bb);
     conv.set(ControlMode.PercentOutput,cc);
 
-    // Coveyor Backup
-
-    // bbar.set(ControlMode.PercentOutput, xbox.getY() * .55);
-    // conv.set(ControlMode.PercentOutput, xbox.getZ() * .30); 
 
 
     // Lifter
@@ -526,11 +529,12 @@ public class Robot extends TimedRobot {
     // Shooter
 
     double shootout = (-1*Logi.getThrottle() + 1) / 2;
+    
+    shootout = remapThrottle(shootout);
 
     leftShoot = shootout;
     rightShoot = shootout;
 
-    remapThrottle(shootout);
 
     // Calculating Spin
     calcShoot(shootout, xbox.getThrottle(),xbox.getTwist());
@@ -595,10 +599,15 @@ public class Robot extends TimedRobot {
         tilt.set(ControlMode.PercentOutput,0.1);
     } 
     else if ((xpov == 180 || xpov == 135 || xpov == 225)||(lpov == 180 || lpov == 135 || lpov == 225)) {
-        tilt.set(ControlMode.PercentOutput,-0.1);
+        tilt.set(ControlMode.PercentOutput,-0.7);
     }
     else {
       tilt.set(ControlMode.PercentOutput,0);
+    }
+
+    // Zero Gyro
+    if(xbox.getRawButtonPressed(7)) {
+      gyro.reset();
     }
 
   }
@@ -609,9 +618,9 @@ public class Robot extends TimedRobot {
   
   @Override
   public void testInit() {
-    setTilt(0);
-    setTiltMagic(12);   
-
+    tiltHome();
+    setTilt(20);
+    setTilt(11);
   }
   
   @Override
@@ -642,10 +651,10 @@ public class Robot extends TimedRobot {
     double current = tilt.getSelectedSensorPosition();
 
     while(true) {
-      if(current < target - 1500){
+      if(current < target - 2000){
         tilt.set(ControlMode.PercentOutput,0.1);
       }
-      else if(target + 1500 < current) {
+      else if(target + 2000 < current) {
         tilt.set(ControlMode.PercentOutput, -0.07);
       }
       else {
@@ -686,17 +695,17 @@ public class Robot extends TimedRobot {
 
 
     // Bands: 0-30,30-60 ,60-90, 90-100
-      if (.30 <= left && left < 0.6)
+      if (.30 <= left && left < 0.4)
         leftShoot = bA;
-      else if (.60 <= left && left < 0.9)
+      else if (.40 <= left && left < 0.9)
         leftShoot = bB;
       else if (.90 <= left && left <= 1) {
         leftShoot= bC;
       }
 
-      if (.30 <= right && right < 0.6)
+      if (.30 <= right && right < 0.4)
         rightShoot = bA;
-      else if (.60 <= right && right < 0.9)
+      else if (.40 <= right && right < 0.9)
         rightShoot = bB;
       else if (.90 <= right && right <= 1) {
         rightShoot= bC;
