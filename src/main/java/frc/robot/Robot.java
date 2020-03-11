@@ -32,6 +32,7 @@ import edu.wpi.first.wpilibj.SPI;
 // import edu.wpi.first.wpilibj.PWMVictorSPX;
 // import edu.wpi.cscore.VideoMode.PixelFormat;
 // import edu.wpi.first.networktables.*;
+import edu.wpi.first.wpilibj.Sendable;
 
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 //import com.ctre.phoenix.motorcontrol.TalonFXFeedbackDevice;
@@ -139,7 +140,7 @@ public class Robot extends TimedRobot {
   private final AnalogInput m_ultrasonic = new AnalogInput(0);
 
   // GYRO
-  Gyro gyro = new ADXRS450_Gyro(SPI.Port.kMXP);
+  Gyro gyro = new ADXRS450_Gyro(SPI.Port.kOnboardCS0);
 
 
   double safety = 1; //0.g
@@ -459,7 +460,7 @@ public class Robot extends TimedRobot {
       bb = bo;
     }
     if (xbox.getRawButton(3)) {
-      bb = -0.75 * bo;
+      cc = -0.75 * co;
     }
 
 
@@ -599,7 +600,7 @@ public class Robot extends TimedRobot {
         tilt.set(ControlMode.PercentOutput,0.1);
     } 
     else if ((xpov == 180 || xpov == 135 || xpov == 225)||(lpov == 180 || lpov == 135 || lpov == 225)) {
-        tilt.set(ControlMode.PercentOutput,-0.7);
+        tilt.set(ControlMode.PercentOutput,-0.07);
     }
     else {
       tilt.set(ControlMode.PercentOutput,0);
@@ -654,7 +655,7 @@ public class Robot extends TimedRobot {
       if(current < target - 2000){
         tilt.set(ControlMode.PercentOutput,0.1);
       }
-      else if(target + 2000 < current) {
+      else if(target + 5000 < current) {
         tilt.set(ControlMode.PercentOutput, -0.07);
       }
       else {
